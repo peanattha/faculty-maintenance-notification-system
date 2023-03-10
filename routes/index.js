@@ -4,6 +4,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const dbConnection = require('../database');
 const { body, validationResult } = require('express-validator');
+const middlewareAuth = require("../middlewares/middlewareAuth")
 
 const app = express();
 app.use(express.urlencoded({ extended: false }));
@@ -18,34 +19,8 @@ app.use(cookieSession({
     maxAge: 3600 * 1000 // 1hr
 }));
 
-// DECLARING CUSTOM MIDDLEWARE
-const ifNotLoggedin = (req, res, next) => {
-    if (!req.session.isLoggedIn) {
-        return res.render('login-register');
-    }
-    next();
-}
-const ifLoggedin = (req, res, next) => {
-    if (req.session.isLoggedIn && (req.session.role == 0)) {
-        return res.redirect('/home');
-    }
-    next();
-}
-const checkAdmin = (req, res, next) => {
-    if (req.session.role != 1) {
-        return res.redirect('/');
-    }
-    next();
-}
-const checkAdmin2 = (req, res, next) => {
-    if (req.session.role == 1) {
-        return res.redirect('/repair');
-    }
-    next();
-}
-// END OF CUSTOM MIDDLEWARE
 // ROOT PAGE
-app.get('/', ifNotLoggedin,checkAdmin2, (req, res, next) => {
+app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res, next) => {
     dbConnection.execute("SELECT * FROM users INNER JOIN repair ON users.id=repair.user_id WHERE users.id=?", [req.session.userID])
         .then(([rows]) => {
             console.log(rows);
@@ -57,7 +32,7 @@ app.get('/', ifNotLoggedin,checkAdmin2, (req, res, next) => {
 
 });// END OF ROOT PAGE
 
-app.get('/repair', ifNotLoggedin,checkAdmin, (req, res, next) => {
+app.get('/repair', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin, (req, res, next) => {
     dbConnection.execute('SELECT * FROM users INNER JOIN repair ON users.id=repair.user_id ORDER BY repair_id asc')
         .then(([rows]) => {
             res.render('repair', {
@@ -68,7 +43,7 @@ app.get('/repair', ifNotLoggedin,checkAdmin, (req, res, next) => {
 });
 
 // REGISTER PAGE
-app.post('/register', ifLoggedin,
+app.post('/register', middlewareAuth.ifLoggedin,
     // post data validation(using express-validator)
     [
         body('user_email', 'Invalid email address!').isEmail().custom((value) => {
@@ -120,7 +95,7 @@ app.post('/register', ifLoggedin,
 
 
 // LOGIN PAGE
-app.post('/', ifLoggedin, [
+app.post('/', middlewareAuth.ifLoggedin, [
     body('user_email').custom((value) => {
         return dbConnection.execute('SELECT email FROM users WHERE email=?', [value])
             .then(([rows]) => {
