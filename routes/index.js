@@ -4,8 +4,8 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const dbConnection = require('../database');
 const { body, validationResult } = require('express-validator');
-const middlewareAuth = require("../middlewares/middlewareAuth")
-
+const middlewareAuth = require("../middlewares/middlewareAuth");
+const repairRoute = require("../routes/repair");
 const app = express();
 app.use(express.urlencoded({ extended: false }));
 // SET OUR VIEWS AND VIEW ENGINE
@@ -18,6 +18,8 @@ app.use(cookieSession({
     keys: ['key1', 'key2'],
     maxAge: 3600 * 1000 // 1hr
 }));
+
+app.use('/repair', repairRoute);
 
 // ROOT PAGE
 app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res, next) => {
@@ -32,15 +34,7 @@ app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res,
 
 });// END OF ROOT PAGE
 
-app.get('/repair', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin, (req, res, next) => {
-    dbConnection.execute('SELECT * FROM users INNER JOIN repair ON users.id=repair.user_id ORDER BY repair_id asc')
-        .then(([rows]) => {
-            res.render('repair', {
-                name: req.session.userName,
-                data: rows
-            });
-        });
-});
+
 
 // REGISTER PAGE
 app.post('/register', middlewareAuth.ifLoggedin,
