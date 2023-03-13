@@ -33,6 +33,7 @@
                             <th scope="col">repair id</th>
                             <th scope="col">Name</th>
                             <th scope="col">status</th>
+                            <th scope="col">details</th>
                             <th width="200px">แก้ใข/ลบ</th>
                         </tr>
                     </thead>
@@ -50,6 +51,9 @@
                                 </td>
                                 <td>
                                     <%= data[i].status %>
+                                </td>
+                                <td>
+                                    <%= data[i].details %>
                                 </td>
                                 <td>
                                     <a href="../books/edit/<%= data[i].id %>" class="btn btn-success edit">Edit</a>
