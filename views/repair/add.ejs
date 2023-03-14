@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เพิ่มรายการเเจ้งซ่อม</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script>
+        window.onload = function () {
+            const equipments = document.getElementById("equipments");
+
+            equipments.addEventListener('change', (event) => {
+                console.log("aa");
+                if (equipments.value == 5) {
+                    document.getElementById("other").removeAttribute('disabled');
+                    document.getElementById("other").required = true;
+                } else {
+                    document.getElementById("other").setAttribute('disabled', '');
+                    document.getElementById("other").required = false;
+                }
+            });
+        };
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">ระบบเเจ้งซ่อมของคณะ</a>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/repair">หน้าหลัก </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/repair/add" class="nav-link">เพิ่มรายการเเจ้งซ่อม <span
+                            class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+            <span class="navbar-text">
+                <a href="/logout" class="btn btn-danger text-light">Logout</a>
+            </span>
+        </div>
+    </nav>
+    <section class="container" style="margin-top: 50px;">
+        <a href="/repair" class="btn btn-primary"><i class='bx bx-arrow-back'></i> Back</a>
+        <br><br>
+
+        <div class="card">
+            <div class="card-header">
+                เพิ่มรายการเเจ้งซ่อม
+            </div>
+            <div class="card-body">
+                <form action="/repair/add" method="post" class="needs-validation" novalidate id="formA">
+                    <div class="form-group">
+                        <label for="exampleFormControlInput1">ชื่อ-นามสกุล</label>
+                        <input type="text" class="form-control" id="name" name="name" value="<%= name[0].name %>"
+                            readonly required>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="exampleFormControlSelect1">เลือกอาคาร</label>
+                                <select class="form-control " id="exampleFormControlSelect1" name="buildings" required>
+                                    <option selected disabled hidden value="">เลือกอาคาร</option>
+                                    <% for(let i=0; i < buildings.length; i++) { %>
+                                        <option value="<%= buildings[i].id %>">
+                                            <%= buildings[i].building_name %>
+                                        </option>
+                                        <% } %>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="exampleFormControlSelect1">เลือกห้อง</label>
+                                <select class="form-control" id="exampleFormControlSelect1" name="rooms" required>
+                                    <option selected disabled hidden value="">เลือกห้อง</option>
+                                    <% for(let i=0; i < rooms.length; i++) { %>
+                                        <option value="<%= rooms[i].id %>">
+                                            <%= rooms[i].room_name %>
+                                        </option>
+                                        <% } %>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleFormControlSelect1">เลือกรายการของแจ้งซ่อม</label>
+                        <select class="form-control" required id="equipments" name="equipments">
+                            <option selected disabled hidden value="">เลือกรายการของแจ้งซ่อม</option>
+                            <% for(let i=0; i < equipments.length; i++) { %>
+                                <option value="<%= equipments[i].id %>">
+                                    <%= equipments[i].equipment_name %>
+                                </option>
+                                <% } %>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleFormControlTextarea1">อื่นๆ</label>
+                        <textarea class="form-control" rows="2" disabled id="other" name="other"></textarea>
+                        <div class="invalid-feedback">
+                            Please input.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleFormControlTextarea1">รายละเอียดการเเจ้งซ่อม</label>
+                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" required name="details"></textarea>
+                        <div class="invalid-feedback">
+                            Please input.
+                        </div>
+                    </div>
+                    <div class="form-group mt-3">
+                        <button type="submit" class="btn btn-primary"><i class='bx bx-add-to-queue'></i>
+                            เพิ่มรายการเเจ้งซ่อม</button>
+                    </div>
+                </form>
+                <% if (locals.addRepair_errors) { addRepair_errors.forEach(function(error_msg){ %>
+                    <div class="alert alert-danger" role="alert">
+                        <%= error_msg %>
+                    </div>
+                <% }); } %>
+                <script>
+                    // Example starter JavaScript for disabling form submissions if there are invalid fields
+                    (function () {
+                        'use strict';
+                        window.addEventListener('load', function () {
+                            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                            var forms = document.getElementsByClassName('needs-validation');
+                            // Loop over them and prevent submission
+                            var validation = Array.prototype.filter.call(forms, function (form) {
+                                form.addEventListener('submit', function (event) {
+                                    if (form.checkValidity() === false) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }
+                                    form.classList.add('was-validated');
+                                }, false);
+                            });
+                        }, false);
+                    })();
+                </script>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>

@@ -9,7 +9,7 @@ const repairRoute = require("../routes/repair");
 const app = express();
 app.use(express.urlencoded({ extended: false }));
 
-// SET OUR VIEWS AND VIEW ENGINE
+// SET VIEW ENGINE
 app.set('views', path.join(__dirname, '../views'));
 app.set('view engine', 'ejs');
 
@@ -24,14 +24,14 @@ app.use('/repair', repairRoute);
 
 // ROOT PAGE
 app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res, next) => {
-    dbConnection.execute("SELECT * FROM users INNER JOIN repairs ON users.id=repairs.user_id JOIN repair_details ON repairs.id = repair_details.repair_id JOIN technicians ON technicians.id = repair_details.technician_id JOIN equipments ON equipments.id = repair_details.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id  WHERE users.id=? ORDER BY repairs.id asc", [req.session.userID])
+    dbConnection.execute("SELECT * FROM users INNER JOIN repairs ON users.id=repairs.user_id JOIN repair_details ON repairs.id = repair_details.repair_id LEFT JOIN technicians ON technicians.id = repair_details.technician_id JOIN equipments ON equipments.id = repair_details.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id  WHERE users.id=11 ORDER BY repairs.id asc", [req.session.userID])
         .then(([rows]) => {
             console.log(rows);
             res.render('home', {
                 data: rows
             });
         });
-});// END OF ROOT PAGE
+});
 
 // REGISTER PAGE
 app.post('/register', middlewareAuth.ifLoggedin,
@@ -50,7 +50,6 @@ app.post('/register', middlewareAuth.ifLoggedin,
         body('user_pass', 'The password must be of minimum length 6 characters').trim().isLength({ min: 6 }),
     ],// end of post data validation
     (req, res, next) => {
-
         const validation_result = validationResult(req);
         const { user_name, user_pass, user_email } = req.body;
         // IF validation_result HAS NO ERROR
@@ -101,7 +100,6 @@ app.post('/', middlewareAuth.ifLoggedin, [
     const validation_result = validationResult(req);
     const { user_pass, user_email } = req.body;
     if (validation_result.isEmpty()) {
-
         dbConnection.execute("SELECT * FROM users WHERE email=?", [user_email])
             .then(([rows]) => {
                 bcrypt.compare(user_pass, rows[0].password).then(compare_result => {
@@ -138,7 +136,6 @@ app.post('/', middlewareAuth.ifLoggedin, [
         });
     }
 });
-// END OF LOGIN PAGE
 
 // LOGOUT
 app.get('/logout', (req, res) => {
@@ -146,7 +143,6 @@ app.get('/logout', (req, res) => {
     req.session = null;
     res.redirect('/');
 });
-// END OF LOGOUT
 
 app.use('/', (req, res) => {
     res.status(404).send('<h1>404 Page Not Found!</h1>');
