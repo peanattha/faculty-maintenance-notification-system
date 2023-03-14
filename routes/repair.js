@@ -5,6 +5,9 @@ const dbConnection = require('../database');
 const { body, validationResult } = require('express-validator');
 const middlewareAuth = require("../middlewares/middlewareAuth");
 const router = express.Router();
+const bodyParser = require('body-parser');
+const app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin, (req, res, next) => {
     dbConnection.execute('SELECT * FROM users INNER JOIN repairs ON users.id=repairs.user_id JOIN repair_details ON repairs.id = repair_details.repair_id JOIN technicians ON technicians.id = repair_details.technician_id JOIN equipments ON equipments.id = repair_details.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
@@ -51,9 +54,18 @@ router.post('/add', async (req, res) => {
         if (validation_result.isEmpty()) {
             connection = await dbConnection.getConnection();
             await connection.beginTransaction();
+            const equipments = req.body.equipments;
             const [result] = await connection.query('INSERT INTO repairs(user_id,room_id) VALUES(?,?)', [req.session.userID, req.body.rooms]);
             const repairsId = result.insertId;
-            await connection.query('INSERT INTO repair_details (repair_id,equipment_id, other,status,details) VALUES(?,?,?,?,?)', [repairsId, req.body.equipments, req.body.other, 1, req.body.details]);
+            if (equipments.length == 1) {
+                const details = req.body.details;
+                await connection.query('INSERT INTO repair_details (repair_id,equipment_id, other,status,details) VALUES(?,?,?,?,?)', [repairsId, equipments, req.body.other, 1, details]);
+            } else {
+                for (let i = 0; i < equipments.length; i++) {
+                    const details = req.body.details;
+                    await connection.query('INSERT INTO repair_details (repair_id,equipment_id, other,status,details) VALUES(?,?,?,?,?)', [repairsId, equipments[i], req.body.other, 1, details[i]]);
+                }
+            }
             await connection.commit();
             console.log('Transaction committed successfully!');
             res.redirect('/repair');
