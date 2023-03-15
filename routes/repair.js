@@ -4,9 +4,25 @@ const { body, validationResult } = require('express-validator');
 const middlewareAuth = require("../middlewares/middlewareAuth");
 const router = express.Router();
 const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
+const path = require('path')
+const multer = require('multer');
 const app = express();
 
+// Set up Multer middleware
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/')
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+});
+const upload = multer({ storage: storage });
+
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(fileUpload());
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin, (req, res, next) => {
     dbConnection.execute('SELECT * FROM users INNER JOIN repairs ON users.id=repairs.user_id JOIN repair_details ON repairs.id = repair_details.repair_id JOIN technicians ON technicians.id = repair_details.technician_id JOIN equipments ON equipments.id = repair_details.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
@@ -28,7 +44,7 @@ router.get('/add', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
         // Execute the SQL queries asynchronously
         const [equipments, buildings, rooms, users] = await Promise.all([
             connection.query('SELECT * FROM equipments'),
-            connection.query('SELECT building_name FROM buildings'),
+            connection.query('SELECT * FROM buildings'),
             connection.query('SELECT * FROM rooms'),
             connection.query('SELECT * FROM users WHERE id=?', [req.session.userID])
         ]);
@@ -40,32 +56,32 @@ router.get('/add', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
             name: users[0]
         })
     } catch (error) {
-        connection.release();
         console.log('Error occurred while fetching data:', error);
         // Send an error response
         res.status(500).send('Failed to fetch data!');
     }
-});
+})
 
-router.post('/add', async (req, res) => {
+router.post('/add',upload.single('image'), async (req, res) => {
     let connection;
     try {
         const validation_result = validationResult(req);
         if (validation_result.isEmpty()) {
+            const date = new Date();
+            const dateStr =
+                date.getFullYear() + "-" +
+                ("00" + (date.getMonth() + 1)).slice(-2) + "-" +
+                ("00" + date.getDate()).slice(-2) + " " +
+                ("00" + date.getHours()).slice(-2) + ":" +
+                ("00" + date.getMinutes()).slice(-2) + ":" +
+                ("00" + date.getSeconds()).slice(-2);
             connection = await dbConnection.getConnection();
             await connection.beginTransaction();
-            const equipments = req.body.equipments;
-            const [result] = await connection.query('INSERT INTO repairs(user_id,room_id,datetime_repair) VALUES(?,?,?)', [req.session.userID, req.body.rooms, req.body.datetime_repair]);
+            const file = req.file;
+            // console.log(file.filename);
+            const [result] = await connection.query('INSERT INTO repairs(user_id,room_id,building_id,equipment_id,datetime_repair,status,other,details,created_at,img) VALUES(?,?,?,?,?,?,?,?,?,?)', [req.session.userID, req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, 1, req.body.other, req.body.details, dateStr,file.filename]);
             const repairsId = result.insertId;
-            if (equipments.length == 1) {
-                const details = req.body.details;
-                await connection.query('INSERT INTO repair_details (repair_id,equipment_id, other,status,details) VALUES(?,?,?,?,?)', [repairsId, equipments, req.body.other, 1, details]);
-            } else {
-                for (let i = 0; i < equipments.length; i++) {
-                    const details = req.body.details;
-                    await connection.query('INSERT INTO repair_details (repair_id,equipment_id, other,status,details) VALUES(?,?,?,?,?)', [repairsId, equipments[i], req.body.other, 1, details[i]]);
-                }
-            }
+            await connection.query('INSERT INTO repairmans(repair_id,created_at) VALUES(?,?)', [repairsId, dateStr]);
             await connection.commit();
             console.log('Transaction committed successfully!');
             res.redirect('/repair');
@@ -73,6 +89,7 @@ router.post('/add', async (req, res) => {
             let allErrors = validation_result.errors.map((error) => {
                 return error.msg;
             });
+            // REDERING login-register PAGE WITH LOGIN VALIDATION ERRORS
             res.render('repair/add', {
                 addRepair_errors: allErrors
             });
