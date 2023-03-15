@@ -1,12 +1,11 @@
 const express = require('express');
-const path = require('path');
-const cookieSession = require('cookie-session');
 const dbConnection = require('../database');
 const { body, validationResult } = require('express-validator');
 const middlewareAuth = require("../middlewares/middlewareAuth");
 const router = express.Router();
 const bodyParser = require('body-parser');
 const app = express();
+
 app.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin, (req, res, next) => {
@@ -41,11 +40,12 @@ router.get('/add', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
             name: users[0]
         })
     } catch (error) {
+        connection.release();
         console.log('Error occurred while fetching data:', error);
         // Send an error response
         res.status(500).send('Failed to fetch data!');
     }
-})
+});
 
 router.post('/add', async (req, res) => {
     let connection;
@@ -55,7 +55,7 @@ router.post('/add', async (req, res) => {
             connection = await dbConnection.getConnection();
             await connection.beginTransaction();
             const equipments = req.body.equipments;
-            const [result] = await connection.query('INSERT INTO repairs(user_id,room_id) VALUES(?,?)', [req.session.userID, req.body.rooms]);
+            const [result] = await connection.query('INSERT INTO repairs(user_id,room_id,datetime_repair) VALUES(?,?,?)', [req.session.userID, req.body.rooms, req.body.datetime_repair]);
             const repairsId = result.insertId;
             if (equipments.length == 1) {
                 const details = req.body.details;
@@ -73,7 +73,6 @@ router.post('/add', async (req, res) => {
             let allErrors = validation_result.errors.map((error) => {
                 return error.msg;
             });
-            // REDERING login-register PAGE WITH LOGIN VALIDATION ERRORS
             res.render('repair/add', {
                 addRepair_errors: allErrors
             });

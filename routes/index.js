@@ -23,7 +23,7 @@ app.use(cookieSession({
 app.use('/repair', repairRoute);
 
 // ROOT PAGE
-app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res, next) => {
+app.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin2, (req, res, next) => {
     dbConnection.execute("SELECT * FROM users INNER JOIN repairs ON users.id=repairs.user_id JOIN repair_details ON repairs.id = repair_details.repair_id LEFT JOIN technicians ON technicians.id = repair_details.technician_id JOIN equipments ON equipments.id = repair_details.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id  WHERE users.id=11 ORDER BY repairs.id asc", [req.session.userID])
         .then(([rows]) => {
             // console.log(rows);
