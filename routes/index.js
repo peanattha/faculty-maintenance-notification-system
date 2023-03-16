@@ -8,6 +8,7 @@ const middlewareAuth = require("../middlewares/middlewareAuth");
 const repairRoute = require("../routes/repair");
 const app = express();
 
+app.use('/uploads', express.static('uploads'));
 app.use(express.urlencoded({ extended: false }));
 
 // SET OUR VIEWS AND VIEW ENGINE
