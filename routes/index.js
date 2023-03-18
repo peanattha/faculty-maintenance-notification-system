@@ -6,7 +6,11 @@ const dbConnection = require('../database');
 const { body, validationResult } = require('express-validator');
 const middlewareAuth = require("../middlewares/middlewareAuth");
 const repairRoute = require("../routes/repair");
+const methodOverride = require('method-override')
+
 const app = express();
+
+app.use(methodOverride('_method'))
 
 app.use('/uploads', express.static('uploads'));
 app.use(express.urlencoded({ extended: false }));
@@ -26,7 +30,7 @@ app.use('/repair', repairRoute);
 
 // ROOT PAGE
 app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res, next) => {
-    dbConnection.execute("SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE users.id=? ORDER BY repairs.id asc", [req.session.userID])
+    dbConnection.execute("SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE users.id=? AND repairs.delete_at IS NULL ORDER BY repairs.id asc", [req.session.userID])
         .then(([rows]) => {
             // console.log(rows);
             res.render('home', {

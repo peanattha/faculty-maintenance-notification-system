@@ -34,7 +34,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin, (req, res, next) => {
-    dbConnection.execute('SELECT * FROM users INNER JOIN repairs ON users.id=repairs.user_id JOIN repair_details ON repairs.id = repair_details.repair_id JOIN technicians ON technicians.id = repair_details.technician_id JOIN equipments ON equipments.id = repair_details.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
+    dbConnection.execute('SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
         .then(([rows]) => {
             console.log(rows)
             res.render('repair', {
@@ -162,7 +162,7 @@ router.post('/update/:id', upload.single('image'), async (req, res) => {
             // Check if the file is empty
             if (file) {
                 const file = req.file;
-                await connection.query('UPDATE repairs SET room_id=?, building_id=? ,equipment_id=? ,datetime_repair=?,other=?,details=?,update_at=?,img=? WHERE id=?', [req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, req.body.other, req.body.details, dateStr,file.filename, id]);
+                await connection.query('UPDATE repairs SET room_id=?, building_id=? ,equipment_id=? ,datetime_repair=?,other=?,details=?,update_at=?,img=? WHERE id=?', [req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, req.body.other, req.body.details, dateStr, file.filename, id]);
                 await connection.commit();
                 console.log('Transaction committed successfully!');
                 res.redirect('/repair/edit/' + id);
@@ -188,6 +188,25 @@ router.post('/update/:id', upload.single('image'), async (req, res) => {
         console.log('Transaction rolled back due to an error:', error);
         res.status(500).send('Transaction failed due to an error!');
     }
+});
+
+router.delete('/delete/:id', (req, res) => {
+    let id = req.params.id;
+    const date = new Date();
+    const dateStr =
+        date.getFullYear() + "-" +
+        ("00" + (date.getMonth() + 1)).slice(-2) + "-" +
+        ("00" + date.getDate()).slice(-2) + " " +
+        ("00" + date.getHours()).slice(-2) + ":" +
+        ("00" + date.getMinutes()).slice(-2) + ":" +
+        ("00" + date.getSeconds()).slice(-2);
+    dbConnection.execute('UPDATE repairs SET delete_at=?, status=? WHERE id=? AND user_id=?', [dateStr, 5, id, req.session.userID], (err, result) => {
+        if (err) {
+            res.redirect('/repair');
+        } else {
+            res.redirect('/repair');
+        }
+    })
 });
 
 module.exports = router;
