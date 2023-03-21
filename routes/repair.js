@@ -4,11 +4,9 @@ const { body, validationResult } = require('express-validator');
 const middlewareAuth = require("../middlewares/middlewareAuth");
 const router = express.Router();
 const bodyParser = require('body-parser');
-const fileUpload = require('express-fileupload');
-const path = require('path')
 const app = express();
-
 const multer = require('multer');
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/')
@@ -17,6 +15,7 @@ const storage = multer.diskStorage({
         cb(null, file.originalname)
     }
 });
+
 function fileNotEmpty(req, file, cb) {
     if (!file.originalname) {
         return cb(null, false);
@@ -31,12 +30,10 @@ const upload = multer({
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(fileUpload());
-
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin, (req, res, next) => {
     dbConnection.execute('SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
         .then(([rows]) => {
-            console.log(rows)
+            // console.log(rows)
             res.render('repair', {
                 name: req.session.userName,
                 data: rows
@@ -44,20 +41,17 @@ router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin, (req, r
         });
 });
 
-// display add book page
+// 
 router.get('/add', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
     let connection;
     try {
-        // Get a connection from the dbConnection
         connection = await dbConnection.getConnection();
-        // Execute the SQL queries asynchronously
         const [equipments, buildings, rooms, users] = await Promise.all([
             connection.query('SELECT * FROM equipments'),
             connection.query('SELECT * FROM buildings'),
             connection.query('SELECT * FROM rooms'),
             connection.query('SELECT * FROM users WHERE id=?', [req.session.userID])
         ]);
-        // Send the result as response
         res.render('repair/add', {
             equipments: equipments[0],
             buildings: buildings[0],
@@ -66,8 +60,9 @@ router.get('/add', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
         })
     } catch (error) {
         console.log('Error occurred while fetching data:', error);
-        // Send an error response
         res.status(500).send('Failed to fetch data!');
+    } finally {
+        connection.release();
     }
 })
 
@@ -98,46 +93,42 @@ router.post('/add', upload.single('image'), async (req, res) => {
             let allErrors = validation_result.errors.map((error) => {
                 return error.msg;
             });
-            // REDERING login-register PAGE WITH LOGIN VALIDATION ERRORS
             res.render('repair/add', {
                 addRepair_errors: allErrors
             });
         }
     } catch (error) {
         await connection.rollback();
-        connection.release();
         console.log('Transaction rolled back due to an error:', error);
         res.status(500).send('Transaction failed due to an error!');
+    } finally {
+        connection.release();
     }
 });
 
-router.get('/edit/(:id)', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
+router.get('/edit/:id', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
     let id = req.params.id;
     let connection;
     try {
-        // Get a connection from the dbConnection
         connection = await dbConnection.getConnection();
-        // Execute the SQL queries asynchronously
-        const [equipments, buildings, rooms, users, repairs] = await Promise.all([
+        const [equipments, buildings, rooms, repairs] = await Promise.all([
             connection.query('SELECT * FROM equipments'),
             connection.query('SELECT * FROM buildings'),
             connection.query('SELECT * FROM rooms'),
-            connection.query('SELECT * FROM users WHERE id=?', [req.session.userID]),
-            connection.query('SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE users.id=? AND repairs.id=?', [req.session.userID, id])
+            connection.query('SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE repairs.id=?', [id])
         ]);
-        // Send the result as response
-        console.log(repairs[0]);
+        // console.log(repairs[0]);
         res.render('repair/edit', {
             equipments: equipments[0],
             buildings: buildings[0],
             rooms: rooms[0],
-            name: users[0],
             repairs: repairs[0]
         })
     } catch (error) {
         console.log('Error occurred while fetching data:', error);
-        // Send an error response
         res.status(500).send('Failed to fetch data!');
+    } finally {
+        connection.release();
     }
 
 })
@@ -159,12 +150,11 @@ router.post('/update/:id', upload.single('image'), async (req, res) => {
             connection = await dbConnection.getConnection();
             await connection.beginTransaction();
             const file = req.file;
-            // Check if the file is empty
             if (file) {
                 const file = req.file;
                 await connection.query('UPDATE repairs SET room_id=?, building_id=? ,equipment_id=? ,datetime_repair=?,other=?,details=?,update_at=?,img=? WHERE id=?', [req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, req.body.other, req.body.details, dateStr, file.filename, id]);
                 await connection.commit();
-                console.log('Transaction committed successfully!');
+                console.log('Transaction committed successfully!!');
                 res.redirect('/repair/edit/' + id);
             } else {
                 await connection.query('UPDATE repairs SET room_id=?, building_id=? ,equipment_id=? ,datetime_repair=?,other=?,details=?,update_at=? WHERE id=?', [req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, req.body.other, req.body.details, dateStr, id]);
@@ -177,9 +167,8 @@ router.post('/update/:id', upload.single('image'), async (req, res) => {
             let allErrors = validation_result.errors.map((error) => {
                 return error.msg;
             });
-            // REDERING login-register PAGE WITH LOGIN VALIDATION ERRORS
             res.render('repair/add', {
-                addRepair_errors: allErrors
+                editRepair_errors: allErrors
             });
         }
     } catch (error) {
@@ -187,6 +176,8 @@ router.post('/update/:id', upload.single('image'), async (req, res) => {
         connection.release();
         console.log('Transaction rolled back due to an error:', error);
         res.status(500).send('Transaction failed due to an error!');
+    } finally {
+        connection.release();
     }
 });
 
@@ -200,13 +191,10 @@ router.delete('/delete/:id', (req, res) => {
         ("00" + date.getHours()).slice(-2) + ":" +
         ("00" + date.getMinutes()).slice(-2) + ":" +
         ("00" + date.getSeconds()).slice(-2);
-    dbConnection.execute('UPDATE repairs SET delete_at=?, status=? WHERE id=? AND user_id=?', [dateStr, 5, id, req.session.userID], (err, result) => {
-        if (err) {
-            res.redirect('/repair');
-        } else {
-            res.redirect('/repair');
-        }
-    })
+    dbConnection.execute('UPDATE repairs SET delete_at=?, status=? WHERE id=?', [dateStr, 5, id])
+        .then(([rows]) => {
+            res.redirect('/');
+        });
 });
 
 module.exports = router;

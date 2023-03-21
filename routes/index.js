@@ -28,16 +28,17 @@ app.use(cookieSession({
 
 app.use('/repair', repairRoute);
 
-// ROOT PAGE
+// ROOT PAGE USER
 app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res, next) => {
     dbConnection.execute("SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE users.id=? AND repairs.delete_at IS NULL ORDER BY repairs.id asc", [req.session.userID])
         .then(([rows]) => {
             // console.log(rows);
             res.render('home', {
-                data: rows
+                data: rows,
+                name: req.session.userName
             });
         });
-});// END OF ROOT PAGE
+});
 
 // REGISTER PAGE
 app.post('/register', middlewareAuth.ifLoggedin,
@@ -66,7 +67,7 @@ app.post('/register', middlewareAuth.ifLoggedin,
                 // INSERTING USER INTO DATABASE
                 dbConnection.execute("INSERT INTO users(name,email,password) VALUES(?,?,?)", [user_name, user_email, hash_pass])
                     .then(result => {
-                        res.send('<h4>your account has been created successfully, Now you can <a href="/">Login</a></h4>');
+                        res.send('<script>alert("บัญชีของคุณถูกสร้างขึ้นเรียบร้อยแล้ว ตอนนี้คุณสามารถเข้าสู่ระบบได้แล้ว"); window.location.href = "/"; </script>');
                     }).catch(err => {
                         // THROW INSERTING USER ERROR'S
                         if (err) throw err;
@@ -144,7 +145,6 @@ app.post('/', middlewareAuth.ifLoggedin, [
         });
     }
 });
-// END OF LOGIN PAGE
 
 // LOGOUT
 app.get('/logout', (req, res) => {
@@ -152,7 +152,6 @@ app.get('/logout', (req, res) => {
     req.session = null;
     res.redirect('/');
 });
-// END OF LOGOUT
 
 app.use('/', (req, res) => {
     res.status(404).send('<h1>404 Page Not Found!</h1>');
