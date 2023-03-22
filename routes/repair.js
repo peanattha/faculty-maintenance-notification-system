@@ -30,7 +30,7 @@ const upload = multer({
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
-router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin, (req, res, next) => {
+router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkUser, middlewareAuth.checkRepairnam, (req, res, next) => {
     dbConnection.execute('SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairs ON users.id=repairs.user_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
         .then(([rows]) => {
             console.log("Show Page Home Admin ID : "+ req.session.userID)
@@ -192,7 +192,7 @@ router.post('/repairmans/:id', async (req, res) => {
         if (validation_result.isEmpty()) {
             connection = await dbConnection.getConnection();
             await connection.beginTransaction();
-            await connection.query('UPDATE repairs SET repairman_id=? WHERE id=?', [req.body.repairman, id]);
+            await connection.query('UPDATE repairs SET repairman_id=?, status=? WHERE id=?', [req.body.repairman, 2,id]);
             await connection.commit();
             console.log('Insert repairman_id in to repairs table successfully!');
             res.redirect('/repair/edit/' + id);

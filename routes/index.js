@@ -6,6 +6,7 @@ const dbConnection = require('../database');
 const { body, validationResult } = require('express-validator');
 const middlewareAuth = require("../middlewares/middlewareAuth");
 const repairRoute = require("../routes/repair");
+const repairmanRoute = require("../routes/repairman");
 const methodOverride = require('method-override')
 const app = express();
 
@@ -26,9 +27,10 @@ app.use(cookieSession({
 }));
 
 app.use('/repair', repairRoute);
+app.use('/repairman', repairmanRoute);
 
 //PAGE USER
-app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res, next) => {
+app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin, middlewareAuth.checkRepairnam, (req, res, next) => {
     dbConnection.execute("SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairs ON users.id=repairs.user_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE users.id=? AND repairs.delete_at IS NULL ORDER BY repairs.id asc", [req.session.userID])
         .then(([rows]) => {
             console.log("Show Page Home User ID : "+ req.session.userID)
@@ -99,7 +101,6 @@ app.post('/', middlewareAuth.ifLoggedin, [
     const validation_result = validationResult(req);
     const { user_pass, user_email } = req.body;
     if (validation_result.isEmpty()) {
-
         dbConnection.execute("SELECT * FROM users WHERE email=?", [user_email])
             .then(([rows]) => {
                 bcrypt.compare(user_pass, rows[0].password).then(compare_result => {
@@ -141,6 +142,7 @@ app.post('/', middlewareAuth.ifLoggedin, [
 app.get('/logout', (req, res) => {
     //session destroy
     req.session = null;
+    console.log("Logout");
     res.redirect('/');
 });
 

@@ -10,15 +10,22 @@ const ifLoggedin = (req, res, next) => {
     }
     next();
 }
-const checkAdmin = (req, res, next) => {
-    if (req.session.role != 1) {
+const checkUser = (req, res, next) => {
+    if (req.session.role == 0) {
         return res.redirect('/');
     }
     next();
 }
-const checkAdmin2 = (req, res, next) => {
+const checkAdmin = (req, res, next) => {
     if (req.session.role == 1) {
         return res.redirect('/repair');
+    }
+    next();
+}
+
+const checkRepairnam = (req, res, next) => {
+    if (req.session.role == 2) {
+        return res.redirect('/repairman');
     }
     next();
 }
@@ -27,5 +34,6 @@ module.exports = {
     ifNotLoggedin : ifNotLoggedin,
     ifLoggedin : ifLoggedin,
     checkAdmin : checkAdmin,
-    checkAdmin2 : checkAdmin2
+    checkUser : checkUser,
+    checkRepairnam : checkRepairnam
 }
