@@ -165,7 +165,7 @@
                 </form>
 
                 <span>
-                    <% if (repairs[0].status == 1 || repairs[0].status == 2 && role == 1) { %>
+                    <% if ((repairs[0].status == 1 || repairs[0].status == 2) && role == 1) { %>
                     <hr>
                     <form action="/repair/repairmans/<%= repairs[0].repair_id %>" method="POST" class="needs-validation mb-3" novalidate>
                         <div class="mb-3">

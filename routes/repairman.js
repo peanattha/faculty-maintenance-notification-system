@@ -8,7 +8,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkUser, (req, res, next) => {
-    dbConnection.execute('SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairmans ON users.name=repairmans.repairman_name JOIN repairs ON repairmans.id=repairs.repairman_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE repairmans.repairman_name = ? AND repairs.status = 2',[req.session.userName])
+    dbConnection.execute('SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairmans ON users.name=repairmans.repairman_name JOIN repairs ON repairmans.id=repairs.repairman_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE repairmans.repairman_name = ? ',[req.session.userName])
         .then(([rows]) => {
             console.log("Show Page Home Repairman ID : "+ req.session.userID)
             res.render('repairman', {
