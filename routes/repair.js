@@ -31,7 +31,7 @@ const upload = multer({
 app.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkAdmin, (req, res, next) => {
-    dbConnection.execute('SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
+    dbConnection.execute('SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairs ON users.id=repairs.user_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
         .then(([rows]) => {
             // console.log(rows)
             res.render('repair', {
@@ -83,9 +83,7 @@ router.post('/add', upload.single('image'), async (req, res) => {
             await connection.beginTransaction();
             const file = req.file;
             // console.log(file.filename);
-            const [result] = await connection.query('INSERT INTO repairs(user_id,room_id,building_id,equipment_id,datetime_repair,status,other,details,created_at,img) VALUES(?,?,?,?,?,?,?,?,?,?)', [req.session.userID, req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, 1, req.body.other, req.body.details, dateStr, file.filename]);
-            const repairsId = result.insertId;
-            await connection.query('INSERT INTO repairmans(repair_id,created_at) VALUES(?,?)', [repairsId, dateStr]);
+            await connection.query('INSERT INTO repairs(user_id,room_id,building_id,equipment_id,datetime_repair,status,other,details,created_at,img) VALUES(?,?,?,?,?,?,?,?,?,?)', [req.session.userID, req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, 1, req.body.other, req.body.details, dateStr, file.filename]);
             await connection.commit();
             console.log('Transaction committed successfully!');
             res.redirect('/repair');
@@ -111,18 +109,21 @@ router.get('/edit/:id', middlewareAuth.ifNotLoggedin, async (req, res, next) => 
     let connection;
     try {
         connection = await dbConnection.getConnection();
-        const [equipments, buildings, rooms, repairs] = await Promise.all([
+        const [equipments, buildings, rooms, repairmans, repairs] = await Promise.all([
             connection.query('SELECT * FROM equipments'),
             connection.query('SELECT * FROM buildings'),
             connection.query('SELECT * FROM rooms'),
-            connection.query('SELECT * FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.repair_id = repairs.id LEFT JOIN technicians ON technicians.id = repairmans.technician_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE repairs.id=?', [id])
+            connection.query('SELECT * FROM repairmans'),
+            connection.query('SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.id = repairs.repairman_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE repairs.id=?', [id])
         ]);
-        // console.log(repairs[0]);
+        console.log(repairs[0]);
         res.render('repair/edit', {
             equipments: equipments[0],
             buildings: buildings[0],
             rooms: rooms[0],
-            repairs: repairs[0]
+            repairs: repairs[0],
+            role : req.session.role,
+            repairmans :repairmans[0]
         })
     } catch (error) {
         console.log('Error occurred while fetching data:', error);
