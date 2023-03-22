@@ -7,7 +7,6 @@ const { body, validationResult } = require('express-validator');
 const middlewareAuth = require("../middlewares/middlewareAuth");
 const repairRoute = require("../routes/repair");
 const methodOverride = require('method-override')
-
 const app = express();
 
 app.use(methodOverride('_method'))
@@ -15,11 +14,11 @@ app.use(methodOverride('_method'))
 app.use('/uploads', express.static('uploads'));
 app.use(express.urlencoded({ extended: false }));
 
-// SET OUR VIEWS AND VIEW ENGINE
+// SET VIEWS AND VIEW ENGINE
 app.set('views', path.join(__dirname, '../views'));
 app.set('view engine', 'ejs');
 
-// APPLY COOKIE SESSION MIDDLEWARE
+// APPLY COOKIE SESSION
 app.use(cookieSession({
     name: 'session',
     keys: ['key1', 'key2'],
@@ -28,11 +27,11 @@ app.use(cookieSession({
 
 app.use('/repair', repairRoute);
 
-// ROOT PAGE USER
+//PAGE USER
 app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res, next) => {
     dbConnection.execute("SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairs ON users.id=repairs.user_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE users.id=? AND repairs.delete_at IS NULL ORDER BY repairs.id asc", [req.session.userID])
         .then(([rows]) => {
-            console.log(rows);
+            console.log("Show Page Home User ID : "+ req.session.userID)
             res.render('home', {
                 data: rows,
                 name: req.session.userName
@@ -40,9 +39,8 @@ app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin2, (req, res,
         });
 });
 
-// REGISTER PAGE
+// REGISTER
 app.post('/register', middlewareAuth.ifLoggedin,
-    // post data validation(using express-validator)
     [
         body('user_email', 'Invalid email address!').isEmail().custom((value) => {
             return dbConnection.execute('SELECT email FROM users WHERE email=?', [value])
@@ -55,35 +53,28 @@ app.post('/register', middlewareAuth.ifLoggedin,
         }),
         body('user_name', 'Username is Empty!').trim().not().isEmpty(),
         body('user_pass', 'The password must be of minimum length 6 characters').trim().isLength({ min: 6 }),
-    ],// end of post data validation
+    ],
     (req, res, next) => {
 
         const validation_result = validationResult(req);
         const { user_name, user_pass, user_email } = req.body;
-        // IF validation_result HAS NO ERROR
         if (validation_result.isEmpty()) {
-            // password encryption (using bcryptjs)
             bcrypt.hash(user_pass, 12).then((hash_pass) => {
-                // INSERTING USER INTO DATABASE
                 dbConnection.execute("INSERT INTO users(name,email,password) VALUES(?,?,?)", [user_name, user_email, hash_pass])
                     .then(result => {
                         res.send('<script>alert("บัญชีของคุณถูกสร้างขึ้นเรียบร้อยแล้ว ตอนนี้คุณสามารถเข้าสู่ระบบได้แล้ว"); window.location.href = "/"; </script>');
                     }).catch(err => {
-                        // THROW INSERTING USER ERROR'S
                         if (err) throw err;
                     });
             })
                 .catch(err => {
-                    // THROW HASING ERROR'S
                     if (err) throw err;
                 })
         }
         else {
-            // COLLECT ALL THE VALIDATION ERRORS
             let allErrors = validation_result.errors.map((error) => {
                 return error.msg;
             });
-            // REDERING login-register PAGE WITH VALIDATION ERRORS
             res.render('login-register', {
                 register_error: allErrors,
                 old_data: req.body
@@ -91,7 +82,7 @@ app.post('/register', middlewareAuth.ifLoggedin,
         }
     });
 
-// LOGIN PAGE
+// LOGIN
 app.post('/', middlewareAuth.ifLoggedin, [
     body('user_email').custom((value) => {
         return dbConnection.execute('SELECT email FROM users WHERE email=?', [value])

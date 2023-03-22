@@ -160,38 +160,48 @@
                             แก้ใขรายการเเจ้งซ่อม</button>
                     </div>
                     <% } %>
-                    <span>
-                        <% if (repairs[0].status == 1 && role == 1) { %>
-                        <!-- <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">ซ่อม</button> -->
-                        <a class="btn btn-primary">รับงานซ่อม</a>
-                        <%} else if(repairs[0].status == 2 && role == 1) { %>
-                        <a href="#" class="btn btn-success">ซ่อมเสร็จสิ้น</a>
-                        <% } %>
-                    </span>
                 </form>
-                <!-- <div class="modal fade" tabindex="-1" id="exampleModal" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Modal title</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form action="#">
-                                    <select class="form-select" aria-label="Default select example">
-                                        <option hidden>เลือกช่างซ่อม</option>
-                                        <% for(let i=0; i < repairmans.length; i++) { %>
+
+                <span>
+                    <% if (repairs[0].status == 1 && role == 1) { %>
+                    <hr>
+                    <form action="/repair/repairmans/<%= repairs[0].repair_id %>" method="POST" class="needs-validation mb-3" novalidate>
+                        <div class="mb-3">
+                            <select class="form-select" name="repairman" required>
+                                <% if (repairs[0].repairman_id != null) { %>
+                                    <% for(let i=0; i < repairmans.length; i++) { %>
+                                        <% if (repairmans[i].id == repairs[0].repairman_id) { %>
+                                            <option value="<%= repairmans[i].id %>" selected>
+                                                <%= repairmans[i].repairman_name %>
+                                            </option>
+                                        <%} else { %>
+                                            <option value="<%= repairmans[i].id %>">
+                                                <%= repairmans[i].repairman_name %>
+                                            </option>
+                                        <% } %>
+                                    <% } %>
+                                    <input type="submit" class="btn btn-primary mt-3" value="แก้ใขช่างซ่อม">
+                                <%} else { %>
+                                    <option hidden value="">เลือกช่างซ่อม</option>
+                                    <% for(let i=0; i < repairmans.length; i++) { %>
                                         <option value="<%= repairmans[i].id %>">
                                             <%= repairmans[i].repairman_name %>
                                         </option>
-                                        <% } %>
-                                    </select>
-                                    <input type="submit" value="เพื่อ">
-                                </form>
+                                    <% } %>
+                                    <input type="submit" class="btn btn-primary mt-3" value="เพิ่มช่างซ่อม">
+                                <% } %>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please input.
                             </div>
                         </div>
-                    </div>
-                </div> -->
+                       
+                    </form>
+                    <!-- <a class="btn btn-primary">รับงานซ่อม</a> -->
+                    <%} else if(repairs[0].status == 2 && role == 1) { %>
+                    <a href="#" class="btn btn-success">ซ่อมเสร็จสิ้น</a>
+                    <% } %>
+                </span>
             </div>
             <img src="../../uploads/<%= repairs[0].img %>" alt="" class="img-thumbnail">
             <script>
