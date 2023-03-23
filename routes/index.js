@@ -31,7 +31,7 @@ app.use('/repairman', repairmanRoute);
 
 //PAGE USER
 app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin, middlewareAuth.checkRepairnam, (req, res, next) => {
-    dbConnection.execute("SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairs ON users.id=repairs.user_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE users.id=? AND repairs.delete_at IS NULL ORDER BY repairs.id asc", [req.session.userID])
+    dbConnection.execute("SELECT * FROM users JOIN repairs ON users.user_id=repairs.user_id JOIN equipments ON equipments.equipment_id = repairs.equipment_id JOIN rooms ON rooms.room_id = repairs.room_id JOIN buildings ON buildings.building_id = rooms.building_id WHERE users.user_id=? AND repairs.delete_at IS NULL ORDER BY repairs.repair_id asc", [req.session.userID])
         .then(([rows]) => {
             console.log("Show Page Home User ID : "+ req.session.userID)
             res.render('home', {
@@ -106,7 +106,7 @@ app.post('/', middlewareAuth.ifLoggedin, [
                 bcrypt.compare(user_pass, rows[0].password).then(compare_result => {
                     if (compare_result === true) {
                         req.session.isLoggedIn = true;
-                        req.session.userID = rows[0].id;
+                        req.session.userID = rows[0].user_id;
                         req.session.userName = rows[0].name;
                         req.session.role = rows[0].role;
                         console.log(req.session)

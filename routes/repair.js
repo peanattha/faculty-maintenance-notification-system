@@ -31,7 +31,7 @@ const upload = multer({
 app.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkUser, middlewareAuth.checkRepairnam, (req, res, next) => {
-    dbConnection.execute('SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairs ON users.id=repairs.user_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id ORDER BY repairs.id asc')
+    dbConnection.execute('SELECT * FROM users JOIN repairs ON users.user_id=repairs.user_id JOIN equipments ON equipments.equipment_id = repairs.equipment_id JOIN rooms ON rooms.room_id = repairs.room_id JOIN buildings ON buildings.building_id = rooms.building_id AND repairs.delete_at IS NULL ORDER BY repairs.repair_id asc')
         .then(([rows]) => {
             console.log("Show Page Home Admin ID : "+ req.session.userID)
             res.render('repair', {
@@ -41,7 +41,6 @@ router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkUser, middlewa
         });
 });
 
-// 
 router.get('/add', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
     let connection;
     try {
@@ -50,7 +49,7 @@ router.get('/add', middlewareAuth.ifNotLoggedin, async (req, res, next) => {
             connection.query('SELECT * FROM equipments'),
             connection.query('SELECT * FROM buildings'),
             connection.query('SELECT * FROM rooms'),
-            connection.query('SELECT * FROM users WHERE id=?', [req.session.userID])
+            connection.query('SELECT * FROM users WHERE user_id=?', [req.session.userID])
         ]);
         console.log("Show Page Add Repair");
         res.render('repair/add', {
@@ -115,7 +114,7 @@ router.get('/edit/:id', middlewareAuth.ifNotLoggedin, async (req, res, next) => 
             connection.query('SELECT * FROM buildings'),
             connection.query('SELECT * FROM rooms'),
             connection.query('SELECT * FROM repairmans'),
-            connection.query('SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairs ON users.id=repairs.user_id LEFT JOIN repairmans ON repairmans.id = repairs.repairman_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE repairs.id=?', [id])
+            connection.query('SELECT * FROM users JOIN repairs ON users.user_id=repairs.user_id LEFT JOIN repairmans ON repairmans.repairman_id = repairs.repairman_id JOIN equipments ON equipments.equipment_id = repairs.equipment_id JOIN rooms ON rooms.room_id = repairs.room_id JOIN buildings ON buildings.building_id = rooms.building_id WHERE repairs.repair_id=?', [id])
         ]);
         // console.log(repairs[0]);
         console.log("Show Page Edit Repair ID : "+ id);
@@ -155,12 +154,12 @@ router.post('/update/:id', upload.single('image'), async (req, res) => {
             const file = req.file;
             if (file) {
                 const file = req.file;
-                await connection.query('UPDATE repairs SET room_id=?, building_id=? ,equipment_id=? ,datetime_repair=?,other=?,details=?,update_at=?,img=? WHERE id=?', [req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, req.body.other, req.body.details, dateStr, file.filename, id]);
+                await connection.query('UPDATE repairs SET room_id=?, building_id=? ,equipment_id=? ,datetime_repair=?,other=?,details=?,update_at=?,img=? WHERE repair_id=?', [req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, req.body.other, req.body.details, dateStr, file.filename, id]);
                 await connection.commit();
                 console.log("Update repair has not image successfully!");
                 res.redirect('/repair/edit/' + id);
             } else {
-                await connection.query('UPDATE repairs SET room_id=?, building_id=? ,equipment_id=? ,datetime_repair=?,other=?,details=?,update_at=? WHERE id=?', [req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, req.body.other, req.body.details, dateStr, id]);
+                await connection.query('UPDATE repairs SET room_id=?, building_id=? ,equipment_id=? ,datetime_repair=?,other=?,details=?,update_at=? WHERE repair_id=?', [req.body.rooms, req.body.buildings, req.body.equipments, req.body.datetime_repair, req.body.other, req.body.details, dateStr, id]);
                 await connection.commit();
                 console.log('Update repair has image successfully!');
                 res.redirect('/repair/edit/' + id);
@@ -192,7 +191,7 @@ router.post('/repairmans/:id', async (req, res) => {
         if (validation_result.isEmpty()) {
             connection = await dbConnection.getConnection();
             await connection.beginTransaction();
-            await connection.query('UPDATE repairs SET repairman_id=?, status=? WHERE id=?', [req.body.repairman, 2,id]);
+            await connection.query('UPDATE repairs SET repairman_id=?, status=? WHERE repair_id=?', [req.body.repairman, 2,id]);
             await connection.commit();
             console.log('Insert repairman_id in to repairs table successfully!');
             res.redirect('/repair/edit/' + id);
@@ -224,7 +223,7 @@ router.delete('/delete/:id', (req, res) => {
         ("00" + date.getHours()).slice(-2) + ":" +
         ("00" + date.getMinutes()).slice(-2) + ":" +
         ("00" + date.getSeconds()).slice(-2);
-    dbConnection.execute('UPDATE repairs SET delete_at=?, status=? WHERE id=?', [dateStr, 5, id])
+    dbConnection.execute('UPDATE repairs SET delete_at=?, status=? WHERE repair_id=?', [dateStr, 5, id])
         .then(([rows]) => {
             console.log('Soft Delete Repairs successfully!');
             res.redirect('/');

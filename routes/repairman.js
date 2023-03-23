@@ -8,9 +8,12 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkUser, (req, res, next) => {
-    dbConnection.execute('SELECT repairs.id AS repair_id,users.id AS user_id,users.*,repairs.*,equipments.*,rooms.*,buildings.* FROM users JOIN repairmans ON users.name=repairmans.repairman_name JOIN repairs ON repairmans.id=repairs.repairman_id JOIN equipments ON equipments.id = repairs.equipment_id JOIN rooms ON rooms.id = repairs.room_id JOIN buildings ON buildings.id = rooms.building_id WHERE repairmans.repairman_name = ? ',[req.session.userName])
+    dbConnection.execute(
+        'SELECT * FROM users JOIN repairs ON users.user_id=repairs.user_id JOIN equipments ON equipments.equipment_id = repairs.equipment_id JOIN rooms ON rooms.room_id = repairs.room_id JOIN buildings ON buildings.building_id = rooms.building_id JOIN repairmans ON repairmans.repairman_id=repairs.repairman_id WHERE repairmans.repairman_name = ? ',
+        [req.session.userName])
         .then(([rows]) => {
             console.log("Show Page Home Repairman ID : "+ req.session.userID)
+            console.log(rows);
             res.render('repairman', {
                 name: req.session.userName,
                 data: rows
@@ -26,7 +29,7 @@ router.post('/repairsuccess/:id', async (req, res) => {
         if (validation_result.isEmpty()) {
             connection = await dbConnection.getConnection();
             await connection.beginTransaction();
-            await connection.query('UPDATE repairs SET status=? WHERE id=?', [3,id]);
+            await connection.query('UPDATE repairs SET status=? WHERE repair_id=?', [3,id]);
             await connection.commit();
             console.log('Update status "repair success" successfully!');
             res.redirect('/repairman');
@@ -56,7 +59,7 @@ router.post('/confirmrepairsuccess/:id', async (req, res) => {
         if (validation_result.isEmpty()) {
             connection = await dbConnection.getConnection();
             await connection.beginTransaction();
-            await connection.query('UPDATE repairs SET status=? WHERE id=?', [4,id]);
+            await connection.query('UPDATE repairs SET status=? WHERE repair_id=?', [4,id]);
             await connection.commit();
             console.log('Update status "confirm repair success" successfully!');
             res.redirect('/repair');

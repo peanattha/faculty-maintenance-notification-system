@@ -75,12 +75,12 @@
                                 <label for="exampleFormControlSelect1">เลือกอาคาร*</label>
                                 <select class="form-select" id="exampleFormControlSelect1" name="buildings" required>
                                     <% for(let i=0; i < buildings.length; i++) { %>
-                                    <% if (buildings[i].id == repairs[0].building_id) { %>
-                                    <option value="<%= buildings[i].id %>" selected>
+                                    <% if (buildings[i].building_id == repairs[0].building_id) { %>
+                                    <option value="<%= buildings[i].building_id %>" selected>
                                         <%= buildings[i].building_name %>
                                     </option>
                                     <%} else { %>
-                                    <option value="<%= buildings[i].id %>">
+                                    <option value="<%= buildings[i].building_id %>">
                                         <%= buildings[i].building_name %>
                                     </option>
                                     <% } %>
@@ -96,12 +96,12 @@
                                 <label for="exampleFormControlSelect1">เลือกห้อง*</label>
                                 <select class="form-select" id="exampleFormControlSelect1" name="rooms" required>
                                     <% for(let i=0; i < rooms.length; i++) { %>
-                                    <% if (rooms[i].id == repairs[0].room_id) { %>
-                                    <option value="<%= rooms[i].id %>" selected>
+                                    <% if (rooms[i].room_id == repairs[0].room_id) { %>
+                                    <option value="<%= rooms[i].room_id %>" selected>
                                         <%= rooms[i].room_name %>
                                     </option>
                                     <%} else { %>
-                                    <option value="<%= rooms[i].id %>">
+                                    <option value="<%= rooms[i].room_id %>">
                                         <%= rooms[i].room_name %>
                                     </option>
                                     <% } %>
@@ -117,12 +117,12 @@
                         <label for="exampleFormControlSelect1">เลือกรายการของแจ้งซ่อม*</label>
                         <select class="form-select" required id="equipments" name="equipments">
                             <% for(let i=0; i < equipments.length; i++) { %>
-                            <% if (equipments[i].id == repairs[0].equipment_id) { %>
-                            <option value="<%= equipments[i].id %>" selected>
+                            <% if (equipments[i].equipment_id == repairs[0].equipment_id) { %>
+                            <option value="<%= equipments[i].equipment_id %>" selected>
                                 <%= equipments[i].equipment_name %>
                             </option>
                             <%} else { %>
-                            <option value="<%= equipments[i].id %>">
+                            <option value="<%= equipments[i].equipment_id %>">
                                 <%= equipments[i].equipment_name %>
                             </option>
                             <% } %>
@@ -172,12 +172,12 @@
                             <select class="form-select" name="repairman" required>
                                 <% if (repairs[0].repairman_id != null) { %>
                                 <% for(let i=0; i < repairmans.length; i++) { %>
-                                <% if (repairmans[i].id == repairs[0].repairman_id) { %>
-                                <option value="<%= repairmans[i].id %>" selected>
+                                <% if (repairmans[i].repairman_id == repairs[0].repairman_id) { %>
+                                <option value="<%= repairmans[i].repairman_id %>" selected>
                                     <%= repairmans[i].repairman_name %>
                                 </option>
                                 <%} else { %>
-                                <option value="<%= repairmans[i].id %>">
+                                <option value="<%= repairmans[i].repairman_id %>">
                                     <%= repairmans[i].repairman_name %>
                                 </option>
                                 <% } %>
@@ -186,7 +186,7 @@
                                 <%} else { %>
                                 <option hidden value="">เลือกช่างซ่อม</option>
                                 <% for(let i=0; i < repairmans.length; i++) { %>
-                                <option value="<%= repairmans[i].id %>">
+                                <option value="<%= repairmans[i].repairman_id %>">
                                     <%= repairmans[i].repairman_name %>
                                 </option>
                                 <% } %>

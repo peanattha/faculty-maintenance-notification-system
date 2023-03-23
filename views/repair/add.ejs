@@ -75,7 +75,7 @@
                                 <select class="form-select" id="exampleFormControlSelect1" name="buildings" required>
                                     <option selected disabled hidden value="">เลือกอาคาร</option>
                                     <% for(let i=0; i < buildings.length; i++) { %>
-                                    <option value="<%= buildings[i].id %>">
+                                    <option value="<%= buildings[i].building_id %>">
                                         <%= buildings[i].building_name %>
                                     </option>
                                     <% } %>
@@ -91,7 +91,7 @@
                                 <select class="form-select" id="exampleFormControlSelect1" name="rooms" required>
                                     <option selected disabled hidden value="">เลือกห้อง</option>
                                     <% for(let i=0; i < rooms.length; i++) { %>
-                                    <option value="<%= rooms[i].id %>">
+                                    <option value="<%= rooms[i].room_id %>">
                                         <%= rooms[i].room_name %>
                                     </option>
                                     <% } %>
@@ -107,7 +107,7 @@
                         <select class="form-select" required id="equipments" name="equipments">
                             <option selected disabled hidden value="">เลือกรายการของแจ้งซ่อม</option>
                             <% for(let i=0; i < equipments.length; i++) { %>
-                            <option value="<%= equipments[i].id %>">
+                            <option value="<%= equipments[i].equipment_id %>">
                                 <%= equipments[i].equipment_name %>
                             </option>
                             <% } %>
