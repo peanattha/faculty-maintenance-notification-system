@@ -31,7 +31,13 @@ app.use('/repairman', repairmanRoute);
 
 //PAGE USER
 app.get('/', middlewareAuth.ifNotLoggedin,middlewareAuth.checkAdmin, middlewareAuth.checkRepairnam, (req, res, next) => {
-    dbConnection.execute("SELECT * FROM users JOIN repairs ON users.user_id=repairs.user_id JOIN equipments ON equipments.equipment_id = repairs.equipment_id JOIN rooms ON rooms.room_id = repairs.room_id JOIN buildings ON buildings.building_id = rooms.building_id WHERE users.user_id=? AND repairs.delete_at IS NULL ORDER BY repairs.repair_id asc", [req.session.userID])
+    dbConnection.execute(
+        "SELECT * FROM users "+
+        "JOIN repairs ON users.user_id=repairs.user_id "+
+        "JOIN equipments ON equipments.equipment_id = repairs.equipment_id "+
+        "JOIN rooms ON rooms.room_id = repairs.room_id "+
+        "JOIN buildings ON buildings.building_id = rooms.building_id "+
+        "WHERE users.user_id=? AND repairs.delete_at IS NULL ORDER BY repairs.repair_id asc", [req.session.userID])
         .then(([rows]) => {
             console.log("Show Page Home User ID : "+ req.session.userID)
             res.render('home', {

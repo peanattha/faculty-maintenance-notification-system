@@ -9,7 +9,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/', middlewareAuth.ifNotLoggedin, middlewareAuth.checkUser, (req, res, next) => {
     dbConnection.execute(
-        'SELECT * FROM users JOIN repairs ON users.user_id=repairs.user_id JOIN equipments ON equipments.equipment_id = repairs.equipment_id JOIN rooms ON rooms.room_id = repairs.room_id JOIN buildings ON buildings.building_id = rooms.building_id JOIN repairmans ON repairmans.repairman_id=repairs.repairman_id WHERE repairmans.repairman_name = ? ',
+        'SELECT * FROM users JOIN repairs ON users.user_id=repairs.user_id '+
+        'JOIN equipments ON equipments.equipment_id = repairs.equipment_id  '+
+        'JOIN rooms ON rooms.room_id = repairs.room_id  '+
+        'JOIN buildings ON buildings.building_id = rooms.building_id  '+
+        'JOIN repairmans ON repairmans.repairman_id=repairs.repairman_id  '+
+        'WHERE repairmans.repairman_name = ? ',
         [req.session.userName])
         .then(([rows]) => {
             console.log("Show Page Home Repairman ID : "+ req.session.userID)

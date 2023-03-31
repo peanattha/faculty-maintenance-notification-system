@@ -1,8 +1,8 @@
 const mysql = require('mysql2');
 const dbConnection = mysql.createPool({
-    host     : 'localhost', // MYSQL HOST NAME
-    user     : 'root', // MYSQL USERNAME
-    password : '', // MYSQL PASSWORD
-    database : 'project_co-op' // MYSQL DB NAME
+    host     : 'localhost',
+    user     : 'root',
+    password : '',
+    database : 'project_co-op'
 }).promise();
 module.exports = dbConnection;
